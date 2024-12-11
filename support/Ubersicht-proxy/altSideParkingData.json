@@ -1,0 +1,63 @@
+{
+  "totalcount": "3",
+  "date": "2024-12-11",
+  "results": [
+    {
+      "Calendarid": "663891c5-4a90-e811-a963-000d3a199795",
+      "CalendarName": "Alternate Side Parking",
+      "CalendarType": {
+        "Id": "b42ddb6b-4a90-e811-a963-000d3a199795",
+        "Name": "Alternate Side Parking"
+      },
+      "IconUrl": "https://www1.nyc.gov/portal/apps/311_images/ico-parking.png",
+      "SaturdayContentFormat": "Alternate side parking and meters are in effect.",
+      "SaturdayRecordName": "IN EFFECT",
+      "SundayContentFormat": "Alternate side parking and meters are not in effect on Sundays.",
+      "SundayRecordName": "NOT IN EFFECT",
+      "WeekDayContentFormat": "Alternate side parking and meters are in effect.",
+      "WeekDayRecordName": "IN EFFECT",
+      "CalendarTypeRecordName": "Alternate Side Parking",
+      "CalendarDetailName": "",
+      "CalendarDetailMessage": "",
+      "CalendarDetailStatus": ""
+    },
+    {
+      "Calendarid": "e0122d57-4b90-e811-a963-000d3a199795",
+      "CalendarName": "Collections",
+      "CalendarType": {
+        "Id": "3c1385e5-4a90-e811-a963-000d3a199795",
+        "Name": "Collections"
+      },
+      "IconUrl": "https://www1.nyc.gov/portal/apps/311_images/ico-trash.png",
+      "SaturdayContentFormat": "Trash, recycling, and compost collections are on schedule.",
+      "SaturdayRecordName": "ON SCHEDULE",
+      "SundayContentFormat": "Trash, recycling, and compost collections are not in effect on Sundays.",
+      "SundayRecordName": "NOT IN EFFECT",
+      "WeekDayContentFormat": "Trash, recycling, and compost collections are on schedule.",
+      "WeekDayRecordName": "ON SCHEDULE",
+      "CalendarTypeRecordName": "Collections",
+      "CalendarDetailName": "",
+      "CalendarDetailMessage": "",
+      "CalendarDetailStatus": ""
+    },
+    {
+      "Calendarid": "09fdd6c5-4b90-e811-a963-000d3a199795",
+      "CalendarName": "Schools",
+      "CalendarType": {
+        "Id": "aaace56f-4b90-e811-a963-000d3a199795",
+        "Name": "Schools"
+      },
+      "IconUrl": "https://www1.nyc.gov/portal/apps/311_images/ico-school.png",
+      "SaturdayContentFormat": "Public schools are not in session.",
+      "SaturdayRecordName": "NOT IN SESSION",
+      "SundayContentFormat": "Public schools are not in session.",
+      "SundayRecordName": "NOT IN SESSION",
+      "WeekDayContentFormat": "Public schools are open.",
+      "WeekDayRecordName": "OPEN",
+      "CalendarTypeRecordName": "Schools",
+      "CalendarDetailName": "",
+      "CalendarDetailMessage": "",
+      "CalendarDetailStatus": ""
+    }
+  ]
+}
