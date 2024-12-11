@@ -30,7 +30,7 @@ A widget to display the daily alternate side parking status. it uses a node prox
 
 `npm install axios node-cron`
 
-`mkdir ~/bin/Ubersicht-proxy/`
+`mkdir -p ~/bin/Ubersicht-proxy/`
 
 `cd ~/bin/Ubersicht-proxy/`
 
