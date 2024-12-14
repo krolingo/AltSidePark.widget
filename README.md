@@ -193,17 +193,34 @@ A .jsx file defines the widget. It gets its data from the running server `const 
 ```jsx
 const API_URL = "http://localhost:3000/api/altSideParking"; // Fetch from the local server
 
-// Helper function to get the current date in "MMM DD, YYYY" format
+// Helper function to get the current date in uppercase "DEC" and "12" format, with the weekday
 const getCurrentDate = () => {
   const now = new Date();
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return now.toLocaleDateString('en-US', options);
+  const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', weekday: 'long' });
+  const parts = formatter.formatToParts(now);
+  const weekday = parts.find(part => part.type === 'weekday').value.toLowerCase(); // e.g., "saturday"
+  const month = parts.find(part => part.type === 'month').value.toUpperCase();    // e.g., "DEC"
+  const day = parts.find(part => part.type === 'day').value;                      // e.g., "14"
+
+  return { weekday, month, day };
 };
 
-// Helper function to format the timestamp from the data source
+// Helper function to format the timestamp to "YYYYMMDD-HH:mm:ss"
 const formatTimestamp = (timestamp) => {
   const date = new Date(timestamp);
-  return date.toLocaleString(); // Format to "MM/DD/YYYY HH:mm:ss"
+
+  // Get date parts (year, month, day)
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // "01" to "12"
+  const day = date.getDate().toString().padStart(2, '0'); // "01" to "31"
+
+  // Get time parts (hours, minutes, seconds)
+  const hours = date.getHours().toString().padStart(2, '0'); // "00" to "23"
+  const minutes = date.getMinutes().toString().padStart(2, '0'); // "00" to "59"
+  const seconds = date.getSeconds().toString().padStart(2, '0'); // "00" to "59"
+
+  // Return in "YYYYMMDD-HH:mm:ss" format
+  return `${year}${month}${day}-${hours}:${minutes}:${seconds}`;
 };
 
 // Check server availability // Wait to load widget until server is running!
@@ -245,28 +262,47 @@ export const command = async () => {
     );
 
     // Get current date
-    const dateCollected = getCurrentDate();
+    const { weekday, month, day } = getCurrentDate();
+
+    // Helper function to determine status based on the current day
+    const getStatus = (item) => {
+      switch (weekday) {
+        case 'saturday':
+          return {
+            status: item?.SaturdayRecordName || "Unknown",
+            message: item?.SaturdayContentFormat || "No information available.",
+          };
+        case 'sunday':
+          return {
+            status: item?.SundayRecordName || "Unknown",
+            message: item?.SundayContentFormat || "No information available.",
+          };
+        default: // Weekday
+          return {
+            status: item?.WeekDayRecordName || "Unknown",
+            message: item?.WeekDayContentFormat || "No information available.",
+          };
+      }
+    };
 
     // Format the lastUpdated timestamp if available
-    const timestamp = data.lastUpdated ? formatTimestamp(data.lastUpdated) : "Unknown";
+    const timestamp = data.lastUpdated ? formatTimestamp(data.lastUpdated) : "ts:Unknown";
 
     return {
       altSideParking: {
-        status: altSideParking?.WeekDayRecordName || "Unknown",
-        message: altSideParking?.WeekDayContentFormat || "No information available.",
+        ...getStatus(altSideParking),
         icon: "AltSidePark.Widget/images/utility-icon-parking-fillcolor.svg", // Image for AltSide Parking
       },
       recycling: {
-        status: recycling?.WeekDayRecordName || "Unknown",
-        message: recycling?.WeekDayContentFormat || "No information available.",
+        ...getStatus(recycling),
         icon: "AltSidePark.Widget/images/utility-icon-sanitation-fillcolor.svg", // Image for Recycling
       },
       schools: {
-        status: schools?.WeekDayRecordName || "Unknown",
-        message: schools?.WeekDayContentFormat || "No information available.",
+        ...getStatus(schools),
         icon: "AltSidePark.Widget/images/utility-icon-school-fillcolor.svg", // Image for Schools
       },
-      dateCollected,
+      month,
+      day,
       timestamp,
     };
   } catch (err) {
@@ -275,6 +311,7 @@ export const command = async () => {
     };
   }
 };
+
 
 // Render the widget
 export const render = ({ output }) => {
@@ -299,13 +336,13 @@ export const render = ({ output }) => {
           <p className="status-text">{output?.altSideParking?.status || "Loading..."}</p>
         </div>
         <div className="status-right">
-          <p className="status-message">{output?.altSideParking.message || "Fetching data..."}</p>
+          <p className="status-message">{output?.altSideParking?.message || "Fetching data..."}</p>
         </div>
       </section>
 
       <section className="status-section">
         <div className="status-left">
-          <img src={output.recycling.icon} alt="Recycling" className="status-icon" />
+          <img src={output.recycling?.icon} alt="Recycling" className="status-icon" />
           <p className="status-label">
             <strong>Collections</strong>
           </p>
@@ -336,7 +373,7 @@ export const render = ({ output }) => {
   );
 };
 
-// CSS Styling
+// CSS Styling (No changes here)
 export const className = `
   .widget {
     position: absolute;
@@ -443,6 +480,4 @@ export const className = `
     text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);    
   }
 `;
-
-
 ```
