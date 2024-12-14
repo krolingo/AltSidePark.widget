@@ -1,7 +1,7 @@
 # AltSidePark.widget
 AltSidePark.widget is my attempt at an Übersicht widget.
 
-A widget to display the daily alternate side parking status. it uses a node proxy server to gather the data it will render. This was a journey.
+A widget to display the daily alternate side parking status. it uses a node proxy server to gather the data it will render. Included here is also a 'short' version of the widget.
 
 <img src="assets/two_widgets_logos.png" width=600px>
 
