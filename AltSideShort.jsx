@@ -30,7 +30,7 @@ const formatTimestamp = (timestamp) => {
   return `${year}${month}${day}-${hours}:${minutes}:${seconds}`;
 };
 
-// Check server availability // Wait to load widget until server is running!
+// Check server availability
 const isServerAvailable = async (url) => {
   try {
     const response = await fetch(url, { method: "HEAD" });
@@ -73,6 +73,13 @@ export const command = async () => {
 
     // Helper function to determine status based on the current day
     const getStatus = (item) => {
+      if (item?.CalendarDetailStatus) {
+        return {
+          status: item.CalendarDetailStatus,
+          message: item.CalendarDetailMessage || "No additional details.",
+        };
+      }
+
       switch (weekday) {
         case 'saturday':
           return {
@@ -119,7 +126,6 @@ export const command = async () => {
   }
 };
 
-
 // Render the widget
 export const render = ({ output }) => {
   if (output?.error) {
@@ -129,8 +135,6 @@ export const render = ({ output }) => {
       </div>
     );
   }
-  
-//       <h1 className="widget-title">TODAY</h1>
 
   return (
     <div className="widget">
