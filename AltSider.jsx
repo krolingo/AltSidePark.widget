@@ -1,31 +1,19 @@
 const API_URL = "http://localhost:3000/api/altSideParking"; // Fetch from the local server
 
-// Helper function to get the current date
+// Helper function to get the current date in "MMM DD, YYYY" format
 const getCurrentDate = () => {
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', weekday: 'long' });
-  const parts = formatter.formatToParts(now);
-  const weekday = parts.find(part => part.type === 'weekday').value.toLowerCase();
-  const month = parts.find(part => part.type === 'month').value.toUpperCase();
-  const day = parts.find(part => part.type === 'day').value;
-
-  return { weekday, month, day };
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return now.toLocaleDateString('en-US', options);
 };
 
-// Format the timestamp to "YYYYMMDD-HH:mm:ss"
+// Helper function to format the timestamp from the data source
 const formatTimestamp = (timestamp) => {
   const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-
-  return `${year}${month}${day}-${hours}:${minutes}:${seconds}`;
+  return date.toLocaleString(); // Format to "MM/DD/YYYY HH:mm:ss"
 };
 
-// Check server availability
+// Check server availability // Wait to load widget until server is running!
 const isServerAvailable = async (url) => {
   try {
     const response = await fetch(url, { method: "HEAD" });
@@ -35,14 +23,14 @@ const isServerAvailable = async (url) => {
   }
 };
 
-// Fetch and process data
+// Command to fetch data
 export const command = async () => {
   let serverAvailable = await isServerAvailable(API_URL);
 
-  // Retry until server is available
+  // Wait until server is available
   while (!serverAvailable) {
-    await new Promise(resolve => setTimeout(resolve, 15000));
-    serverAvailable = await isServerAvailable(API_URL);
+    await new Promise(resolve => setTimeout(resolve, 15000)); // Wait for 15 seconds
+    serverAvailable = await isServerAvailable(API_URL); // Check again
   }
 
   try {
@@ -52,41 +40,54 @@ export const command = async () => {
     }
     const data = await response.json();
 
-    const altSideParking = data.results.find(item => item.CalendarName === "Alternate Side Parking");
-    const recycling = data.results.find(item => item.CalendarName === "Collections");
-    const schools = data.results.find(item => item.CalendarName === "Schools");
-    const { weekday, month, day } = getCurrentDate();
+    // Extract relevant calendar data
+    const altSideParking = data.results.find(
+      (item) => item.CalendarName === "Alternate Side Parking"
+    );
+    const recycling = data.results.find(
+      (item) => item.CalendarName === "Collections"
+    );
+    const schools = data.results.find(
+      (item) => item.CalendarName === "Schools"
+    );
 
+    // Get current date
+    const dateCollected = getCurrentDate();
+
+    // Function to determine status and message correctly
     const getStatus = (item) => {
-      if (item?.CalendarDetailStatus) {
+      if (item?.CalendarDetailStatus && item.CalendarDetailStatus !== "IN EFFECT") {
         return {
-          status: item.CalendarDetailStatus,
-          message: item.CalendarDetailMessage || "No details available.",
+          status: item.CalendarDetailStatus.toUpperCase(), // Shows "SUSPENDED" if applicable
+          message: item.CalendarDetailMessage || "Check NYC 311 for details.",
         };
       }
-
-      switch (weekday) {
-        case 'saturday':
-          return { status: item?.SaturdayRecordName || "Unknown", message: item?.SaturdayContentFormat || "No info available." };
-        case 'sunday':
-          return { status: item?.SundayRecordName || "Unknown", message: item?.SundayContentFormat || "No info available." };
-        default:
-          return { status: item?.WeekDayRecordName || "Unknown", message: item?.WeekDayContentFormat || "No info available." };
-      }
+      return {
+        status: item?.WeekDayRecordName || "Unknown",
+        message: item?.WeekDayContentFormat || "No information available.",
+      };
     };
-
-    const timestamp = data.lastUpdated ? formatTimestamp(data.lastUpdated) : "Unknown timestamp";
 
     return {
-      altSideParking: { ...getStatus(altSideParking), icon: "AltSidePark.Widget/images/utility-icon-parking-fillcolor.svg" },
-      recycling: { ...getStatus(recycling), icon: "AltSidePark.Widget/images/utility-icon-sanitation-fillcolor.svg" },
-      schools: { ...getStatus(schools), icon: "AltSidePark.Widget/images/utility-icon-school-fillcolor.svg" },
-      month,
-      day,
-      timestamp,
+      altSideParking: {
+        ...getStatus(altSideParking),
+        icon: "AltSidePark.Widget/images/utility-icon-parking-fillcolor.svg",
+      },
+      recycling: {
+        ...getStatus(recycling),
+        icon: "AltSidePark.Widget/images/utility-icon-sanitation-fillcolor.svg",
+      },
+      schools: {
+        ...getStatus(schools),
+        icon: "AltSidePark.Widget/images/utility-icon-school-fillcolor.svg",
+      },
+      dateCollected,
+      timestamp: data.lastUpdated ? formatTimestamp(data.lastUpdated) : "Unknown",
     };
   } catch (err) {
-    return { error: `Error fetching data: ${err.message}` };
+    return {
+      error: `Error fetching data: ${err.message}`,
+    };
   }
 };
 
@@ -102,19 +103,44 @@ export const render = ({ output }) => {
 
   return (
     <div className="widget">
-      <h1 className="widget-title">NYC Today 🗽 {output.month} {output.day}</h1>
-      {['altSideParking', 'recycling', 'schools'].map((section) => (
-        <section className="status-section" key={section}>
-          <div className="status-left">
-            <img src={output[section].icon} alt={section} className="status-icon" />
-            <p className="status-label"><strong>{section.replace(/([A-Z])/g, ' $1')}</strong></p>
-            <p className="status-text">{output[section].status}</p>
-          </div>
-          <div className="status-right">
-            <p className="status-message">{output[section].message}</p>
-          </div>
-        </section>
-      ))}
+      <h1 className="widget-title">NYC Today 🗽 {output.dateCollected} </h1>
+
+      {/* Alternate Side Parking Section */}
+      <section className="status-section">
+        <div className="status-left">
+          <img src={output?.altSideParking?.icon} alt="Alternate Side Parking" className="status-icon" />
+          <p className="status-label"><strong>Alternate Side Parking</strong></p>
+          <p className="status-text">{output?.altSideParking?.status || "Loading..."}</p>
+        </div>
+        <div className="status-right">
+          <p className="status-message">{output?.altSideParking?.message || "Fetching data..."}</p>
+        </div>
+      </section>
+
+      {/* Collections Section */}
+      <section className="status-section">
+        <div className="status-left">
+          <img src={output.recycling?.icon} alt="Recycling" className="status-icon" />
+          <p className="status-label"><strong>Collections</strong></p>
+          <p className="status-text">{output?.recycling?.status || "Loading..."}</p>
+        </div>
+        <div className="status-right">
+          <p className="status-message">{output?.recycling?.message || "Fetching data..."}</p>
+        </div>
+      </section>
+
+      {/* Schools Section */}
+      <section className="status-section">
+        <div className="status-left">
+          <img src={output?.schools?.icon} alt="Schools" className="status-icon" />
+          <p className="status-label"><strong>Schools</strong></p>
+          <p className="status-text">{output?.schools?.status || "Loading..."}</p>
+        </div>
+        <div className="status-right">
+          <p className="status-message">{output?.schools?.message || "Fetching data..."}</p>
+        </div>
+      </section>
+
       <footer>
         <p className="timestamp">Last updated: {output.timestamp}</p>
       </footer>
@@ -127,7 +153,7 @@ export const className = `
   .widget {
     position: absolute;
     top: 40px;
-    left: 1010px;
+    left: 1165px;
     padding: 20px;
     font-family: 'SF Pro', Arial, sans-serif;
     font-size: 16px;
